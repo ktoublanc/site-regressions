@@ -1,0 +1,4 @@
+rootProject.name = 'site-regression'
+include 'image-tools'
+include 'selenium-tests'
+
