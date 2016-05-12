@@ -3,6 +3,7 @@ package com.github.ktoublanc.site.regression.selenium.tests;
 
 import com.github.ktoublanc.site.regression.selenium.tests.browser.Browser;
 import com.github.ktoublanc.site.regression.selenium.tests.browser.Browsers;
+import cucumber.api.PendingException;
 import cucumber.api.Scenario;
 import cucumber.api.java.After;
 import cucumber.api.java.Before;
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by kevin on 06/05/2016.
@@ -45,7 +47,6 @@ public class CommonSteps implements En {
 
                 } else {
                     scenario.write("No differences found for browser: " + browser.getDeviceName());
-
                 }
             } catch (IOException e) {
                 Assertions.fail("Exception occurred while processing reports", e);
@@ -75,13 +76,23 @@ public class CommonSteps implements En {
 
             });
 
-            exceptions.forEach((Throwable throwable) -> {
-                if (throwable instanceof AssertionError) {
-                    throw ((AssertionError) throwable);
-                } else {
-                    throw ((RuntimeException) throwable);
-                }
-            });
+            Optional<Throwable> assertionError = exceptions
+                    .stream()
+                    .filter((throwable) -> throwable instanceof AssertionError)
+                    .findFirst();
+
+            if (assertionError.isPresent()) {
+                throw ((AssertionError) assertionError.get());
+            }
+
+            Optional<Throwable> pendingException = exceptions
+                    .stream()
+                    .filter((throwable) -> throwable instanceof AssertionError)
+                    .findFirst();
+
+            if (pendingException.isPresent()) {
+                throw ((PendingException) pendingException.get());
+            }
         });
     }
 }
