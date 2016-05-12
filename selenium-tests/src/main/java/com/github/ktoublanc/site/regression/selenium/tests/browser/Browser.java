@@ -117,10 +117,10 @@ public abstract class Browser {
     }
 
     public boolean hasDifferences() {
-        return imageDifferences != null && imageDifferences.hasDifferences();
+        return snapshot == null || reference == null || imageDifferences == null || imageDifferences.hasDifferences();
     }
 
     public byte[] getPngDifferenceImage() throws IOException {
-        return hasDifferences() ? ImageTools.pngToByteArray(imageDifferences.joinDifferenceHighlightedImages()) : null;
+        return hasDifferences() && imageDifferences != null ? ImageTools.pngToByteArray(imageDifferences.joinDifferenceHighlightedImages()) : null;
     }
 }
