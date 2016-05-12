@@ -39,12 +39,18 @@ public class ImageDifferencesTests {
         assertThat(imageDifferences.joinDifferenceHighlightedImages()).isNotNull();
     }
 
-    @Test(expected = ImageComparisonException.class)
+    @Test
     public void imageSizeMismatch() throws IOException, ImageComparisonException {
-        new ImageDifferences(
-                ImageTools.imageFromPath(Paths.get("src/test/resources/reference.png")),
-                new BufferedImage(10, 10, BufferedImage.TYPE_BYTE_BINARY)
+        final ImageDifferences differences = new ImageDifferences(
+                ImageTools.imageFromPath(Paths.get("src/test/resources/github-chrome.png")),
+                ImageTools.imageFromPath(Paths.get("src/test/resources/github-firefox.png"))
         );
+
+        assertThat(differences.hasDifferences()).isTrue();
+
+        final BufferedImage image = differences.joinDifferenceHighlightedImages();
+        assertThat(image.getWidth()).isEqualTo(2105);
+        assertThat(image.getHeight()).isEqualTo(2118);
     }
 
 }

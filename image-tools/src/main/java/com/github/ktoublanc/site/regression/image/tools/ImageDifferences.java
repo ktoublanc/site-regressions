@@ -26,7 +26,7 @@ public class ImageDifferences {
     /**
      * No Color constant
      */
-    public static final Color NO_COLOR = new Color(0f, 0f, 0f, 0f);
+    private static final Color NO_COLOR = new Color(0f, 0f, 0f, 0f);
 
     /**
      * the analyser rect size
@@ -95,10 +95,6 @@ public class ImageDifferences {
         this.comparedImage = comparedImage;
         this.size = size < 0 ? DEFAULT_RECT_SIZE : size;
 
-        if (!ImageTools.checkSizes(referenceImage, comparedImage)) {
-            throw new ImageComparisonException("Images dimensions mismatch");
-        }
-
         this.findDifferences();
     }
 
@@ -118,14 +114,18 @@ public class ImageDifferences {
      * Creates a copy of the compared image with differences highlighted
      */
     public BufferedImage differenceHighlightedComparedImage() {
-        return this.createDifferenceHighlightedImage(comparedImage);
+        int height = Math.max(referenceImage.getHeight(), comparedImage.getHeight());
+        int width = Math.max(referenceImage.getWidth(), comparedImage.getWidth());
+        return this.createDifferenceHighlightedImage(comparedImage, width, height);
     }
 
     /**
      * Creates a copy of the reference image with differences highlighted
      */
     public BufferedImage differenceHighlightedReferenceImage() {
-        return this.createDifferenceHighlightedImage(referenceImage);
+        int height = Math.max(referenceImage.getHeight(), comparedImage.getHeight());
+        int width = Math.max(referenceImage.getWidth(), comparedImage.getWidth());
+        return this.createDifferenceHighlightedImage(referenceImage, width, height);
     }
 
     /**
@@ -134,21 +134,23 @@ public class ImageDifferences {
      * @return The joined difference images
      */
     public BufferedImage joinDifferenceHighlightedImages() {
-        final BufferedImage referenceImage = createDifferenceHighlightedImage(this.referenceImage);
-        final BufferedImage comparedImage = createDifferenceHighlightedImage(this.comparedImage);
+        int height = Math.max(referenceImage.getHeight(), comparedImage.getHeight());
+        int width = Math.max(referenceImage.getWidth(), comparedImage.getWidth());
+        final BufferedImage referenceImage = createDifferenceHighlightedImage(this.referenceImage, width, height);
+        final BufferedImage comparedImage = createDifferenceHighlightedImage(this.comparedImage, width, height);
 
         int offset = 5;
-        int wid = referenceImage.getWidth() + comparedImage.getWidth() + offset;
-        int height = Math.max(referenceImage.getHeight(), comparedImage.getHeight()) + offset;
+        int newWidth = referenceImage.getWidth() + comparedImage.getWidth() + offset;
+        int newHeight = Math.max(referenceImage.getHeight(), comparedImage.getHeight()) + offset;
 
         //create a new buffer and draw two image into the new image
-        BufferedImage newImage = new BufferedImage(wid, height, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage newImage = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2 = newImage.createGraphics();
         final Color oldColor = g2.getColor();
 
         //fill background
         g2.setPaint(NO_COLOR);
-        g2.fillRect(0, 0, wid, height);
+        g2.fillRect(0, 0, newWidth, newHeight);
 
         //draw image
         g2.setColor(oldColor);
@@ -172,19 +174,27 @@ public class ImageDifferences {
      * Find differences between the two compared images
      */
     private void findDifferences() {
-        int referenceImageWidth = referenceImage.getWidth(null);
-        int referenceImageHeight = referenceImage.getHeight(null);
-        for (int y = 0; y < referenceImageHeight; y += size) {
-            for (int x = 0; x < referenceImageWidth; x += size) {
+        int maxImageWidth = Math.max(referenceImage.getWidth(), comparedImage.getWidth());
+        int minImageWidth = Math.min(referenceImage.getWidth(), comparedImage.getWidth());
+        int maxImageHeight = Math.max(referenceImage.getHeight(), comparedImage.getHeight());
+        int minImageHeight = Math.min(referenceImage.getHeight(), comparedImage.getHeight());
+
+        for (int x = 0; x < maxImageWidth; x += size) {
+            for (int y = 0; y < maxImageHeight; y += size) {
+
+                if (y >= minImageHeight || x >= minImageWidth) {
+                    this.addDifference(x, y);
+                    continue;
+                }
 
                 double referenceMean = 0;
                 double comparedMean = 0;
                 int pixelCount = 0;
                 for (int xx = x; xx < x + size; xx++) {
-                    if (xx >= referenceImageWidth) break;
-
                     for (int yy = y; yy < y + size; yy++) {
-                        if (yy >= referenceImageHeight) break;
+                        if (xx >= minImageWidth || yy >= minImageHeight) {
+                            break;
+                        }
                         referenceMean += referenceImage.getRGB(xx, yy);
                         comparedMean += comparedImage.getRGB(xx, yy);
                         pixelCount++;
@@ -194,56 +204,70 @@ public class ImageDifferences {
                 referenceMean = referenceMean / (double) pixelCount;
                 comparedMean = comparedMean / (double) pixelCount;
                 if (comparedMean != referenceMean) {
-                    ImageDifference imageDifference = new ImageDifference(x, y, size);
-                    if (differenceMap.containsKey(x)) {
-                        final Map<Integer, ImageDifference> yMap = differenceMap.get(x);
-                        yMap.put(y, imageDifference);
-                    } else {
-                        final Map<Integer, ImageDifference> yMap = new HashMap<>();
-                        yMap.put(y, imageDifference);
-                        differenceMap.put(x, yMap);
-                    }
+                    this.addDifference(x, y);
                 }
             }
         }
     }
 
     /**
+     * Add difference into map
+     *
+     * @param x the x position
+     * @param y the y position
+     */
+    private void addDifference(int x, int y) {
+        final ImageDifference imageDifference = new ImageDifference(x, y, size);
+        if (differenceMap.containsKey(x)) {
+            final Map<Integer, ImageDifference> yMap = differenceMap.get(x);
+            yMap.put(y, imageDifference);
+        } else {
+            final Map<Integer, ImageDifference> yMap = new HashMap<>();
+            yMap.put(y, imageDifference);
+            differenceMap.put(x, yMap);
+        }
+    }
+
+    /**
      * Create difference highlighted image
      *
-     * @param image The target image
+     * @param image  The target image
+     * @param height the new height
+     * @param width  the new width
      */
-    private BufferedImage createDifferenceHighlightedImage(final BufferedImage image) {
-        final Graphics2D g2d = image.createGraphics();
+    private BufferedImage createDifferenceHighlightedImage(final BufferedImage image, final int width, final int height) {
+        final BufferedImage scaledImage = new BufferedImage(width, height, image.getType());
+        final Graphics2D g2d = scaledImage.createGraphics();
+        g2d.drawImage(image, 0, 0, null);
+
         // Set color to red with 50% of transparency
         g2d.setColor(RED_TRANSPARENT_COLOR);
 
-        differenceMap.forEach((final Integer x, final Map<Integer, ImageDifference> yMap) -> {
-            yMap.forEach((final Integer y, final ImageDifference diff) -> {
+        differenceMap.forEach((final Integer x, final Map<Integer, ImageDifference> yMap) -> yMap.forEach((final Integer y, final ImageDifference diff) -> {
 
-                final boolean hasDifferenceAbove = differenceMap.containsKey(diff.x) && differenceMap.get(diff.x).containsKey(diff.y - diff.size);
-                if (!hasDifferenceAbove) {
-                    g2d.drawLine(diff.x, diff.y, diff.x + diff.size, diff.y);
-                }
+            final boolean hasDifferenceAbove = differenceMap.containsKey(diff.x) && differenceMap.get(diff.x).containsKey(diff.y - diff.size);
+            if (!hasDifferenceAbove) {
+                g2d.drawLine(diff.x, diff.y, diff.x + diff.size, diff.y);
+            }
 
-                final boolean hasDifferenceAtRight = differenceMap.containsKey(diff.x + diff.size) && differenceMap.get(diff.x + diff.size).containsKey(diff.y);
-                if (!hasDifferenceAtRight) {
-                    g2d.drawLine(diff.x + diff.size, diff.y, diff.x + diff.size, diff.y + diff.size);
-                }
+            final boolean hasDifferenceAtRight = differenceMap.containsKey(diff.x + diff.size) && differenceMap.get(diff.x + diff.size).containsKey(diff.y);
+            if (!hasDifferenceAtRight) {
+                g2d.drawLine(diff.x + diff.size, diff.y, diff.x + diff.size, diff.y + diff.size);
+            }
 
-                final boolean hasDifferenceAtLeft = differenceMap.containsKey(diff.x - diff.size) && differenceMap.get(diff.x - diff.size).containsKey(diff.y);
-                if (!hasDifferenceAtLeft) {
-                    g2d.drawLine(diff.x, diff.y, diff.x, diff.y + diff.size);
-                }
+            final boolean hasDifferenceAtLeft = differenceMap.containsKey(diff.x - diff.size) && differenceMap.get(diff.x - diff.size).containsKey(diff.y);
+            if (!hasDifferenceAtLeft) {
+                g2d.drawLine(diff.x, diff.y, diff.x, diff.y + diff.size);
+            }
 
-                final boolean hasDifferenceUnder = differenceMap.containsKey(diff.x) && differenceMap.get(diff.x).containsKey(diff.y + diff.size);
-                if (!hasDifferenceUnder) {
-                    g2d.drawLine(diff.x, diff.y + diff.size, diff.x + diff.size, diff.y + diff.size);
-                }
+            final boolean hasDifferenceUnder = differenceMap.containsKey(diff.x) && differenceMap.get(diff.x).containsKey(diff.y + diff.size);
+            if (!hasDifferenceUnder) {
+                g2d.drawLine(diff.x, diff.y + diff.size, diff.x + diff.size, diff.y + diff.size);
+            }
 
-                g2d.fillRect(diff.x, diff.y, diff.size, diff.size);
-            });
-        });
-        return image;
+            g2d.fillRect(diff.x, diff.y, diff.size, diff.size);
+        }));
+
+        return scaledImage;
     }
 }
