@@ -1,2 +1,24 @@
 group 'com.github.ktoublanc'
 version '1.0-SNAPSHOT'
+
+task modifyCucumberCss() {
+    def cssToAppend = "img { width:100%; height:auto; }"
+    outputs.upToDateWhen {
+        String fileContents = ""
+        def file = new File('selenium-tests/build/cucumber/style.css')
+        if (file.exists()) {
+            fileContents = file.text
+        }
+
+        fileContents.endsWith(cssToAppend)
+    }
+
+    doLast {
+        def file = new File('selenium-tests/build/cucumber/style.css')
+        if (file.exists()) {
+            file << cssToAppend
+        }
+    }
+}
+
+test.finalizedBy modifyCucumberCss
