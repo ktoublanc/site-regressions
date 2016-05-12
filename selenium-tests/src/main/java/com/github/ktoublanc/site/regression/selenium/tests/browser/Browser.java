@@ -1,6 +1,5 @@
 package com.github.ktoublanc.site.regression.selenium.tests.browser;
 
-import com.github.ktoublanc.site.regression.image.tools.ImageComparisonException;
 import com.github.ktoublanc.site.regression.image.tools.ImageDifferences;
 import com.github.ktoublanc.site.regression.image.tools.ImageTools;
 import cucumber.api.PendingException;
@@ -78,14 +77,10 @@ public abstract class Browser {
             throw new PendingException("No reference found for test case");
         }
 
-        try {
-            imageDifferences = new ImageDifferences(reference, snapshot);
-            Assertions.assertThat(imageDifferences.hasDifferences())
-                    .describedAs("Image comparison found differences between current snapshot and references")
-                    .isFalse();
-        } catch (ImageComparisonException e) {
-            Assertions.fail(e.getMessage(), e);
-        }
+        imageDifferences = new ImageDifferences(reference, snapshot);
+        Assertions.assertThat(imageDifferences.hasDifferences())
+                .describedAs("Image comparison found differences between current snapshot and references")
+                .isFalse();
     }
 
     /**

@@ -88,9 +88,8 @@ public class ImageDifferences {
      * @param referenceImage The reference image
      * @param comparedImage  The compared image
      * @param size           The analysing rectangle size
-     * @throws ImageComparisonException if images size mismatch
      */
-    public ImageDifferences(final BufferedImage referenceImage, final BufferedImage comparedImage, final int size) throws ImageComparisonException {
+    public ImageDifferences(final BufferedImage referenceImage, final BufferedImage comparedImage, final int size) {
         this.referenceImage = referenceImage;
         this.comparedImage = comparedImage;
         this.size = size < 0 ? DEFAULT_RECT_SIZE : size;
@@ -104,9 +103,8 @@ public class ImageDifferences {
      *
      * @param referenceImage The reference image
      * @param comparedImage  The compared image
-     * @throws ImageComparisonException if images size mismatch
      */
-    public ImageDifferences(final BufferedImage referenceImage, final BufferedImage comparedImage) throws ImageComparisonException {
+    public ImageDifferences(final BufferedImage referenceImage, final BufferedImage comparedImage) {
         this(referenceImage, comparedImage, DEFAULT_RECT_SIZE);
     }
 
