@@ -59,12 +59,13 @@ public class CommonSteps implements En {
 
         Given("^I want to take snapshots? of (.*)", (String url) -> this.url = url);
 
-        When("^I take snapshot with each available browsers$", () -> browsers.forEach(
-                browser -> browser.captureSnapshot(url))
+        When("^I take snapshot with each available browsers$",
+                () -> browsers.parallelStream().forEach(browser -> browser.captureSnapshot(url))
         );
 
         Then("^I assert that there are no differences between snapshots$", () -> {
             final List<Throwable> exceptions = new ArrayList<>();
+
             browsers.forEach(browser -> {
                 try {
                     browser.checkDifferences();
