@@ -52,8 +52,6 @@ public class CommonSteps implements En {
                 Assertions.fail("Exception occurred while processing reports", e);
             }
         });
-
-        browsers.forEach(Browser::close);
     }
 
     public CommonSteps() throws IOException {
@@ -73,8 +71,9 @@ public class CommonSteps implements En {
                 } catch (RuntimeException | AssertionError e) {
                     exceptions.add(e);
                 }
-
             });
+
+            browsers.forEach(Browser::close);
 
             Optional<Throwable> assertionError = exceptions
                     .stream()
