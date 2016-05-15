@@ -29,18 +29,19 @@ I'm sure that you will easily understand what is doing what ;)
 
 The project is based on the Selenium RemoteWebDriver tech so to run it you need to have at least two selenium servers running onto your laptop. 
 Docker might be a good place to look for to launch these two servers:
-```CLI
-docker run -d -p 4444:4444  selenium/standalone-chrome:2.53.0
-docker run -d -p 5555:4444  selenium/standalone-firefox:2.53.0
+```bash
+docker run -d -p 4444:4444 --name selenium-hub selenium/hub;
+for i in $(seq 1 4);
+do 
+    docker run -d --link selenium-hub:hub selenium/node-firefox; 
+    docker run -d --link selenium-hub:hub selenium/node-chrome; 
+done
 ```
 
 Note that the URL should be changed in the Java files
 ```java
-    FireFox() throws MalformedURLException {
-        super("firefox", "http://192.168.99.100:5555/wd/hub", DesiredCapabilities.firefox());
-    }
-
-    Chrome() throws MalformedURLException {
-        super("chrome", "http://192.168.99.100:4444/wd/hub", DesiredCapabilities.chrome());
-    }
+    public abstract class Browser {
+    
+        private static final String URL = "http://192.168.99.100:4444/wd/hub";
+        ...
 ```

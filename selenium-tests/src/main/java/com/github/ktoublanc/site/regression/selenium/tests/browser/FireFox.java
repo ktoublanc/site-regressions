@@ -10,6 +10,6 @@ import java.net.MalformedURLException;
 public class FireFox extends Browser {
 
     FireFox() throws MalformedURLException {
-        super("firefox", "http://192.168.99.100:5555/wd/hub", DesiredCapabilities.firefox());
+        super("firefox", DesiredCapabilities.firefox());
     }
 }

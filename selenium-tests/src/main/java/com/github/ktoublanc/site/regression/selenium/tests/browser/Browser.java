@@ -23,6 +23,8 @@ import java.nio.file.Paths;
  */
 public abstract class Browser {
 
+    private static final String URL = "http://192.168.99.100:4444/wd/hub";
+
     private final String deviceName;
     private final WebDriver webDriver;
     private BufferedImage snapshot;
@@ -35,9 +37,9 @@ public abstract class Browser {
      *
      * @param deviceName The browser device name
      */
-    Browser(final String deviceName, final String url, final Capabilities capabilities) throws MalformedURLException {
+    Browser(final String deviceName, final Capabilities capabilities) throws MalformedURLException {
         this.deviceName = deviceName;
-        this.webDriver = new RemoteWebDriver(URI.create(url).toURL(), capabilities);
+        this.webDriver = new RemoteWebDriver(URI.create(URL).toURL(), capabilities);
     }
 
     /**

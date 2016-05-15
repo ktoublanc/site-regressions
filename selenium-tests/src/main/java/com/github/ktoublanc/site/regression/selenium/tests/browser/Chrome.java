@@ -10,13 +10,11 @@ import java.net.MalformedURLException;
  */
 public class Chrome extends Browser {
 
-    private static final String CHROME_URL = "http://192.168.99.100:4444/wd/hub";
-
     /**
      * Default constructor for building an Chrome browser
      */
     Chrome() throws MalformedURLException {
-        super("chrome", CHROME_URL, DesiredCapabilities.chrome());
+        super("chrome", DesiredCapabilities.chrome());
     }
 
     /**
@@ -26,6 +24,6 @@ public class Chrome extends Browser {
      * @param capabilities the chrome emulated capabilities
      */
     Chrome(final String deviceName, final Capabilities capabilities) throws MalformedURLException {
-        super(deviceName, CHROME_URL, capabilities);
+        super(deviceName, capabilities);
     }
 }
